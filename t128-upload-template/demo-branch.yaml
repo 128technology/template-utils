@@ -1,0 +1,50 @@
+authority:
+  router:
+  - name: "{{instance.name}}"
+    inter-node-security: inter-node
+    node:
+    - name: node-a
+      role: combo
+    node:
+    - name: "{{instance.name}}"
+      role: combo
+      device-interface:
+      - name: WAN
+        pci-address: "0000:00:12.0"
+        network-interface:
+        - name: WAN
+          conductor: true
+          inter-router-security: inter-router
+          source-nat: true
+          dhcp: v4
+          neighborhood:
+          - name: demo-wan1
+            peer-connectivity: outbound-only
+            vector: demo-wan1
+      - name: LAN
+        pci-address: "0000:00:13.0"
+        network-interface:
+        - name: LAN
+          address:
+          - ip-address: "{{instance.variables.lan.ip_address}}"
+            prefix-length: "{{instance.variables.lan.prefix}}"
+    service-route:
+    - name: "{{instance.name|capitalize}}-LAN"
+      service-name: "{{instance.name|capitalize}}-LAN"
+      next-hop:
+      - node-name: "{{instance.name}}"
+        interface: LAN
+
+  service:
+  - name: "{{instance.name|capitalize}}-LAN"
+    security: demo-sec
+    access-policy:
+    - source: demo-tenant
+    address:
+    - "{{instance.variables.lan.network}}"
+
+  security:
+  - name: demo-sec
+
+  tenant:
+  - name: demo-tenant

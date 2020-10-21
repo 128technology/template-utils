@@ -1,0 +1,5 @@
+instances:
+- name: generated-router-01
+  location: Boston
+- name: generated-router-02
+  location: New York

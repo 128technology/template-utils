@@ -1,0 +1,61 @@
+authority:
+  name: Demo
+  conductor-address:
+  - "{{instance.variables.conductor_ip_addresses[0]}}"
+
+  router:
+  - name: demo-conductor
+    location: Datacenter
+  - name: demo-headend
+    location: Datacenter
+    inter-node-security: inter-node
+    node:
+    - placeholder: beginfor_nodes
+    - name: "node-{{ node }}"
+      role: combo
+      device-interface:
+      - name: WAN
+        pci-address: "0000:00:12.0"
+        network-interface:
+        - name: WAN
+          conductor: true
+          inter-router-security: inter-router
+          source-nat: true
+          neighborhood:
+          - name: demo-wan1
+            topology: hub
+            vector: demo-wan1
+          address:
+          - ip-address: "{{instance.variables.headend.wan.ip_address}}"
+            prefix-length: "{{instance.variables.headend.wan.prefix}}"
+            gateway: "{{instance.variables.headend.wan.gateway}}"
+            host-service:
+            - service-type: ssh
+      - name: HA-Sync
+        pci-address: "0000:00:13.0"
+        forwarding: false
+        network-interface:
+        - name: HA-Sync
+          type: fabric
+          address:
+          - ip-address: 169.254.0.{% if forloop.first == true %}1{% else %}2{% endif %}
+            prefix-length: 30
+      - name: HA-Fabric
+        pci-address: "0000:00:14.0"
+        network-interface:
+        - name: HA-Fabric
+          type: fabric
+          address:
+          - ip-address: 169.254.0.{% if forloop.first == true %}5{% else %}6{% endif %}
+            prefix-length: 30
+            gateway: 169.254.0.{% if forloop.first == true %}6{% else %}5{% endif %}
+            host-service:
+            - service-type: ssh
+    - placeholder: endfor
+
+  security:
+  - name: inter-node
+    encrypt: false
+    hmac-mode: disabled
+    adaptive-encryption: false
+  - name: inter-router

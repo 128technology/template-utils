@@ -1,0 +1,5 @@
+authority:
+  router:
+  - name: "{{instance.name}}"
+    location: "{{instance.location}}"
+    inter-node-security: internal

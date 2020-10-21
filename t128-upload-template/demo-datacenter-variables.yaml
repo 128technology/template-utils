@@ -1,0 +1,11 @@
+instances:
+- name: datacenter
+  variables:
+    conductor_ip_addresses:
+      - 203.0.113.11
+      - 203.0.113.12
+    headend:
+      wan:
+        ip_address: 203.0.113.21
+        prefix: 24
+        gateway: 203.0.113.1
