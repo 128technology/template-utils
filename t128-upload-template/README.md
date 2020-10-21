@@ -17,7 +17,7 @@ After cloning the repo, it is recommended to create a python virtualenv and use 
 git clone https://github.com/128technology/template-utils.git
 cd template-utils/t128-upload-template
 python3 -m venv venv
-pip install -r requirements.txt
+venv/bin/pip install -r requirements.txt
 ```
 
 ## Usage

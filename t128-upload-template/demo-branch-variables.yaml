@@ -5,3 +5,9 @@ instances:
       ip_address: 10.0.1.1
       prefix: 24
       network: 10.0.1.0/24
+- name: demo-branch-02
+  variables:
+    lan:
+      ip_address: 10.0.2.1
+      prefix: 24
+      network: 10.0.2.0/24
