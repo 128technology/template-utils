@@ -93,6 +93,8 @@ class Conductor:
             'body': template.strip('\n'),
             'variables': variables,
         }
+
+        print('Uploading template...')
         # if template exists: quit unless force is set
         if self.template_name in self.get_templates():
             if not self.force:
@@ -111,14 +113,17 @@ class Conductor:
         r = self.post('template/{}/generate'.format(self.template_name))
         gen_id = r.json()['id']
         finished = False
+        print('Generating configuration...')
         while not finished:
             r = self.get('template/{}/generationStatus/{}'.format(
                 self.template_name, gen_id))
             if r.json()['status'] != 'FINISHED':
-                warn('Config generation not finished yet. Waiting 1 second...')
+                progress(r.json()['percentComplete'])
                 time.sleep(1)
                 continue
             finished = True
+            progress(r.json()['percentComplete'])
+            print('')
 
         if r.json()['errors']:
             error('There was an issue during config generation:', r.json())
@@ -174,6 +179,10 @@ def load_json_yaml(filename):
 
 def replace_template(t):
     """Replace template."""
+    t = re.sub(r'(,?)(\n\s+)"beginif": "(.+)",\n',
+               r'\1\2{%- if \3 %}\n', t)
+    t = re.sub(r',(\n\s+)"endif": [^,]+(,?)\n',
+               r'\2\1{%- endif %}\n', t)
     t = re.sub(r'{\n(\s+)"placeholder": "beginif (.+)"\n(\s+)},',
                r'{%- if \2 %}', t)
     t = re.sub(r'},\n(\s+){\n(\s+)"placeholder": "endif"\n(\s+)},',
@@ -213,6 +222,15 @@ def parse_arguments():
     parser.add_argument('--force', '-f', action='store_true',
                         help='force template upload')
     return parser.parse_args()
+
+
+def progress(count, total=100, status='', bar_len=60):
+    filled_len = int(round(bar_len * count / float(total)))
+    percents = round(100.0 * count / float(total), 0)
+    fmt = '[{:-<60}] {:3.0f} %'.format('='*filled_len, percents)
+    print('\b' * len(fmt), end='')  # clears the line
+    sys.stdout.write(fmt)
+    sys.stdout.flush()
 
 
 def main():
