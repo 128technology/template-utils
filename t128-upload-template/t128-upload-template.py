@@ -94,7 +94,7 @@ class Conductor:
             'variables': variables,
         }
 
-        print('Uploading template...')
+        print('Uploading template "{}"...'.format(self.template_name))
         # if template exists: quit unless force is set
         if self.template_name in self.get_templates():
             if not self.force:
@@ -110,10 +110,11 @@ class Conductor:
         """Render a template to 128T config."""
         if self.revert:
             r = self.post('/config/revertToRunning')
+        print('Generating configuration...')
+        progress(0)
         r = self.post('template/{}/generate'.format(self.template_name))
         gen_id = r.json()['id']
         finished = False
-        print('Generating configuration...')
         while not finished:
             r = self.get('template/{}/generationStatus/{}'.format(
                 self.template_name, gen_id))
