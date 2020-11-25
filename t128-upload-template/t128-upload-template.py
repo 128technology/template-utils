@@ -13,13 +13,14 @@ import yaml
 
 class Conductor:
     """Helper class for REST API."""
-    def __init__(self, host, username, password, force, revert):
+    def __init__(self, host, username, password, force, revert, verify):
         self.host = host
         self.username = username
         self.password = password
         self.force = force
         self.revert = revert
         self.session = requests.Session()
+        self.verify = verify
 
     def login(self):
         r = self.post('login',
@@ -32,7 +33,7 @@ class Conductor:
     def get(self, location):
         location = location.strip('/')
         url = 'https://{}/api/v1/{}'.format(self.host, location)
-        r = self.session.get(url, verify=False)
+        r = self.session.get(url, verify=self.verify)
         if not r.ok:
             warn(r.reason, r.text)
         return r
@@ -40,7 +41,7 @@ class Conductor:
     def patch(self, location, json):
         location = location.strip('/')
         url = 'https://{}/api/v1/{}'.format(self.host, location)
-        r = self.session.patch(url, json=json, verify=False)
+        r = self.session.patch(url, json=json, verify=self.verify)
         if not r.ok:
             warn(r.reason, r.text)
         return r
@@ -48,7 +49,7 @@ class Conductor:
     def post(self, location, json=None):
         location = location.strip('/')
         url = 'https://{}/api/v1/{}'.format(self.host, location)
-        r = self.session.post(url, json=json, verify=False)
+        r = self.session.post(url, json=json, verify=self.verify)
         if not r.ok:
             warn(r.reason, r.text, '(at {})'.format(url))
         return r
@@ -236,11 +237,13 @@ def progress(count, total=100, status='', bar_len=60):
 
 def main():
     args = parse_arguments()
+    verify=True
     if args.insecure:
         urllib3.disable_warnings()
+        verify=False
 
     conductor = Conductor(
-        args.conductor, args.username, args.password, args.force, args.revert)
+        args.conductor, args.username, args.password, args.force, args.revert, verify)
     conductor.login()
 
     if args.restore:
