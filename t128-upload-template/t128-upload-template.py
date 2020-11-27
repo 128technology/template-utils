@@ -73,7 +73,12 @@ class Conductor:
         base_name = basename(template_file)
         self.template_name = splitext(base_name)[0]
         content = load_json_yaml(template_file)
-        instance_template = replace_template(json.dumps(content, indent=4))
+        # if json/yaml is invalid load raw file
+        if content:
+            instance_template = replace_template(json.dumps(content, indent=4))
+        else:
+            with open(template_file) as fd:
+                instance_template = fd.read()
 
         template = '\n'.join((
             '{% for instance in instances %}',
@@ -172,7 +177,7 @@ def load_json_yaml(filename):
         try:
             data = yaml.safe_load(content)
             return data
-        except ValueError:
+        except (ValueError, yaml.scanner.ScannerError):
             pass
 
         # ... None when both attempts fail
