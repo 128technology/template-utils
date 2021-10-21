@@ -11,6 +11,9 @@ import urllib3
 import yaml
 
 
+DEBUG = False
+
+
 class Conductor:
     """Helper class for REST API."""
     def __init__(self, host, username, password, force, revert, verify):
@@ -76,6 +79,7 @@ class Conductor:
         # if json/yaml is invalid load raw file
         if content:
             instance_template = replace_template(json.dumps(content, indent=4))
+            debug('template:', instance_template)
         else:
             with open(template_file) as fd:
                 instance_template = fd.read()
@@ -150,6 +154,12 @@ class Conductor:
                   '\n '.join(['- {message}'.format(**d) for d in r.json()]))
 
 
+def debug(*message):
+    """Print a debug message."""
+    if DEBUG:
+        print('DEBUG:', *message)
+
+
 def error(*message):
     """Print an error message and quit."""
     print('ERROR:', *message)
@@ -186,9 +196,11 @@ def load_json_yaml(filename):
 
 def replace_template(t):
     """Replace template."""
-    t = re.sub(r'(,?)(\n\s+)"beginif": "(.+)",\n',
+    t = re.sub(r'(,?)(\n\s+)"beginif_.*": "(.+)",\n',
                r'\1\2{%- if \3 %}\n', t)
-    t = re.sub(r',(\n\s+)"endif": [^,]+(,?)\n',
+    t = re.sub(r',(\n\s+)"else_.*": [^,]+(,?)\n',
+               r'\2\1{%- else %}\n', t)
+    t = re.sub(r',(\n\s+)"endif_.*": [^,]+(,?)\n',
                r'\2\1{%- endif %}\n', t)
     t = re.sub(r'{\n(\s+)"placeholder": "beginif (.+)"\n(\s+)},',
                r'{%- if \2 %}', t)
@@ -228,6 +240,8 @@ def parse_arguments():
                         help='skip TLS certificate validation')
     parser.add_argument('--force', '-f', action='store_true',
                         help='force template upload')
+    parser.add_argument('--debug', action='store_true',
+                        help='show debug output')
     return parser.parse_args()
 
 
@@ -241,7 +255,9 @@ def progress(count, total=100, status='', bar_len=60):
 
 
 def main():
+    global DEBUG
     args = parse_arguments()
+    DEBUG = args.debug
     verify=True
     if args.insecure:
         urllib3.disable_warnings()
