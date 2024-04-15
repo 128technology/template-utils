@@ -202,10 +202,10 @@ def replace_template(t):
                r'\2\1{%- else %}\n', t)
     t = re.sub(r',(\n\s+)"endif_.*": [^,]+(,?)\n',
                r'\2\1{%- endif %}\n', t)
-    t = re.sub(r'{\n(\s+)"placeholder": "beginif (.+)"\n(\s+)},',
-               r'{%- if \2 %}', t)
-    t = re.sub(r'},\n(\s+){\n(\s+)"placeholder": "endif"\n(\s+)},',
-               r'},\n\1{%- endif %}', t)
+    t = re.sub(r'}(,?)\n(\s+){\n(\s+)"placeholder": "beginif (.+)"\n(\s+)},',
+               r'}\n\2{%- if \4 %}\1', t)
+    t = re.sub(r'}(,?)\n(\s+){\n(\s+)"placeholder": "endif"\n(\s+)},',
+               r'}\1\n\2{%- endif %}', t)
     t = re.sub(r'{\n(\s+)"placeholder": "beginfor (.+)"\n(\s+)},',
                r'{%- for \2 %}', t)
     t = re.sub(r'{\n(\s+)"placeholder": "beginfor_nodes"\n(\s+)},',
