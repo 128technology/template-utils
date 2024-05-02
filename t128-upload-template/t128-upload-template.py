@@ -196,22 +196,63 @@ def load_json_yaml(filename):
 
 def replace_template(t):
     """Replace template."""
-    t = re.sub(r'(,?)(\n\s+)"beginif_.*": "(.+)",\n',
-               r'\1\2{%- if \3 %}\n', t)
-    t = re.sub(r',(\n\s+)"else_.*": [^,]+(,?)\n',
-               r'\2\1{%- else %}\n', t)
-    t = re.sub(r',(\n\s+)"endif_.*": [^,]+(,?)\n',
-               r'\2\1{%- endif %}\n', t)
+    t = re.sub(r'(\s+){\n(\s+)"placeholder": "assign (.*)"\n(\s+)},',
+               r'\1{%- assign \3 %}', t)
+
+    t = re.sub(r'{\n\s+"placeholder": "beginfor (.+) with (.+)"\n(\s+)},',
+               r'{%- assign _first = false %}\n\3{%- for \1 %}\n\3{%- if \2 %}\n\3{%- if _first == false %}{% assign _first = true %}{% else %},{% endif %}', t)
+    t = re.sub(r'},\n(\s+){\n\s+"placeholder": "endforwith"\n\s+}',
+               r'}\n\1{%- endif %}\n\1{%- endfor %}', t)
+
+
+    t = re.sub(r'{\n\s+"placeholder": "beginfor([^ ]*) (.+)"\n(\s+)},',
+               r'{%- assign \1_first = false %}\n\3{%- for \2 %}\n\3{%- if \1_first == false %}{% assign \1_first = true %}{% else %},{% endif %}', t)
+
+    t = re.sub(r'(}?),\n(\s+){\n\s+"placeholder": "endfor"\n\s+}',
+               r'\1\n\2{%- endfor %}', t)
+
+    t = re.sub(r'\[(,?)\n(\s+){\n(\s+)"placeholder": "beginif (.+)"\n(\s+)},',
+               r'[\n\2{%- if \4 %}\1', t)
+
     t = re.sub(r'}(,?)\n(\s+){\n(\s+)"placeholder": "beginif (.+)"\n(\s+)},',
                r'}\n\2{%- if \4 %}\1', t)
-    t = re.sub(r'}(,?)\n(\s+){\n(\s+)"placeholder": "endif"\n(\s+)},',
+
+    t = re.sub(r'}(,?)\n(\s+){\n(\s+)"placeholder": "else"\n(\s+)},',
+               r'}\n\2{%- else %}', t)
+
+    t = re.sub(r'},\n(\s+){\n(\s+)"placeholder": "endif"\n(\s+)}\n\s+{%- endfor %}',
+               r'}\n\1{%- endif %}\n\1{%- endfor %}', t)
+
+    t = re.sub(r'}(,?)\n(\s+){\n(\s+)"placeholder": "endif"\n(\s+)},?',
                r'}\1\n\2{%- endif %}', t)
-    t = re.sub(r'{\n(\s+)"placeholder": "beginfor (.+)"\n(\s+)},',
-               r'{%- for \2 %}', t)
-    t = re.sub(r'{\n(\s+)"placeholder": "beginfor_nodes"\n(\s+)},',
-               r'{% assign nodes = "a,b" | split: "," %}{%- for node in nodes %}', t)
-    t = re.sub(r',\n(\s+){\n(\s+)"placeholder": "endfor"\n(\s+)}',
-               r'\n\1{% if forloop.last == false %},{% endif %}{%- endfor %}', t)
+
+    t = re.sub(r'},\n(\s+){\n(\s+)"placeholder": "endif_last"\n(\s+)},?',
+               r'}\n\1{%- endif %}', t)
+
+
+    t = re.sub(r'(\n\s+)"assign_.*": "(.+)",?\n',
+               r'\1{%- assign \2 %}\n', t)
+
+    # why is this needed? (question mark in regex above does not seem to work...)
+    t = re.sub(r'(\n\s+)"assign_.*": "(.+)",\n',
+               r'\1{%- assign \2 %}\n', t)
+
+    t = re.sub(r'(,?)(\n\s+)"beginif_.*": "(.+)",\n',
+               r'\1\2{%- if \3 %}\n', t)
+
+    t = re.sub(r',(\n\s+)"elsif_last_.*": "(.+)",\n',
+               r'\1{%- elsif \2 %}\n', t)
+    t = re.sub(r'(,?)(\n\s+)"elsif_.*": "(.+)",\n',
+               r'\1\2{%- elsif \3 %}\n', t)
+
+    t = re.sub(r',?(\n\s+)"else_.*": [^,]+(,?)\n',
+               r'\1{%- else %}\n', t)
+
+    t = re.sub(r',(\n\s+)"endif_.*": [^,\n}]+(,?)\n',
+               r'\2\1{%- endif %}\n', t)
+    t = re.sub(r'(\n\s+)"endif_.*": [^,\n}]+,\n',
+               r'\1{%- endif %}\n', t)
+
     return t
 
 

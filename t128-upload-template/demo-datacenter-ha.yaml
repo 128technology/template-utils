@@ -10,8 +10,9 @@ authority:
     location: Datacenter
     inter-node-security: inter-node
     node:
-    - placeholder: beginfor_nodes
-    - name: "node-{{ node }}"
+    - placeholder: "assign nodes = 'node-a,node-b' | split: ','"
+    - placeholder: beginfor node in nodes
+    - name: "{{ node }}"
       role: combo
       device-interface:
       - name: WAN
